@@ -3,6 +3,7 @@ package wenshushu
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -34,6 +35,11 @@ const (
 	userInfo  = "https://www.wenshushu.cn/ap/user/userinfo"
 	userStor  = "https://www.wenshushu.cn/ap/user/storage"
 )
+
+// 创建一个自定义的 Transport 并设置 InsecureSkipVerify 为 true 来跳过 SSL 证书验证
+tr := &http.Transport{
+    TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+}
 
 func (b *wssTransfer) InitUpload(_ []string, sizes []int64) error {
 	if b.Config.singleMode {
@@ -146,7 +152,7 @@ func (b wssTransfer) uploader(ch *chan *uploadPart, config sendConfigBlock) {
 			continue
 		}
 
-		client := http.Client{Timeout: time.Duration(b.Config.interval) * time.Second}
+		client := http.Client{Transport: tr,Timeout: time.Duration(b.Config.interval) * time.Second}
 		data := new(bytes.Buffer)
 		data.Write(item.content)
 		if apis.DebugMode {
@@ -412,7 +418,7 @@ func newRequest(link string, postBody string, config requestConfig) (*sendConfig
 
 	}
 
-	client := http.Client{Timeout: config.timeout}
+	client := http.Client{Transport: tr,Timeout: config.timeout}
 	req, err := http.NewRequest("POST", link, bytes.NewReader([]byte(postBody)))
 	if err != nil {
 		if config.debug {
