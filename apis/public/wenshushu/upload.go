@@ -321,6 +321,14 @@ func (b wssTransfer) getSendConfig(totalSize int64, totalCount int) (*sendConfig
 	if apis.DebugMode {
 		log.Println("step 1/3 timeToken")
 	}
+	// 创建自定义 Transport 并设置 InsecureSkipVerify 为 true 来跳过 SSL 证书验证
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+    }
+
+    // 修改 http.DefaultClient 的 Transport
+    http.DefaultClient.Transport = tr
+	
 	req, err := http.NewRequest("GET", timeToken, nil)
 	if err != nil {
 		return nil, err
